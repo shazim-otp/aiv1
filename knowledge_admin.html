@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MECK – Knowledge Admin</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#0b0b0b;
+  color:white;
+}
+
+header{
+  padding:16px;
+  text-align:center;
+  font-size:22px;
+  background:#000;
+  border-bottom:1px solid #222;
+}
+
+.container{
+  padding:16px;
+}
+
+.card{
+  background:#111;
+  border:1px solid #222;
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:16px;
+}
+
+input, textarea{
+  width:100%;
+  padding:10px;
+  margin-top:8px;
+  border-radius:8px;
+  border:none;
+  background:#222;
+  color:white;
+}
+
+button{
+  margin-top:10px;
+  padding:10px 16px;
+  border:none;
+  border-radius:8px;
+  background:#1e90ff;
+  color:white;
+  cursor:pointer;
+}
+
+.delete-btn{
+  background:#ff4444;
+  margin-left:10px;
+}
+
+.row{
+  border-bottom:1px solid #222;
+  padding:10px 0;
+}
+.small{
+  color:#aaa;
+  font-size:13px;
+}
+.success{
+  color:#00ff9c;
+  font-size:13px;
+}
+.error{
+  color:#ff6666;
+  font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<header>MECK – Knowledge Admin</header>
+
+<div class="container">
+
+  <!-- ADD KNOWLEDGE -->
+  <div class="card">
+    <h3>Add Knowledge</h3>
+    <input id="q" placeholder="Question (example: who is elon musk)">
+    <textarea id="a" rows="4" placeholder="Answer"></textarea>
+    <button onclick="addKnowledge()">Add</button>
+  </div>
+
+  <!-- UPLOAD JSON -->
+  <div class="card">
+    <h3>Upload Knowledge JSON</h3>
+    <input type="file" id="jsonFile" accept=".json">
+    <button onclick="uploadJSON()">Upload & Merge</button>
+    <p id="uploadStatus" class="small"></p>
+  </div>
+
+  <!-- KNOWLEDGE LIST -->
+  <div class="card">
+    <h3>Stored Knowledge</h3>
+    <div id="list"></div>
+  </div>
+
+</div>
+
+<script>
+function loadKnowledge(){
+  fetch("/knowledge-data")
+  .then(r=>r.json())
+  .then(data=>{
+    const list=document.getElementById("list");
+    list.innerHTML="";
+    Object.keys(data).forEach(q=>{
+      const div=document.createElement("div");
+      div.className="row";
+      div.innerHTML=`
+        <b>${q}</b>
+        <p class="small">${data[q]}</p>
+        <button class="delete-btn" onclick="del('${q}')">Delete</button>
+      `;
+      list.appendChild(div);
+    });
+  });
+}
+
+function addKnowledge(){
+  const q=document.getElementById("q").value.trim();
+  const a=document.getElementById("a").value.trim();
+  if(!q||!a) return alert("Fill both fields");
+
+  fetch("/knowledge-add",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({question:q,answer:a})
+  }).then(()=>{
+    document.getElementById("q").value="";
+    document.getElementById("a").value="";
+    loadKnowledge();
+  });
+}
+
+function del(q){
+  fetch("/knowledge-delete",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({question:q})
+  }).then(()=>loadKnowledge());
+}
+
+/* ======================
+   JSON UPLOAD (MERGE)
+   ====================== */
+function uploadJSON(){
+  const file=document.getElementById("jsonFile").files[0];
+  const status=document.getElementById("uploadStatus");
+
+  if(!file){
+    status.innerText="Please select a JSON file.";
+    status.className="error";
+    return;
+  }
+
+  const form=new FormData();
+  form.append("file",file);
+
+  status.innerText="Uploading...";
+  status.className="small";
+
+  fetch("/knowledge-upload",{
+    method:"POST",
+    body:form
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    if(d.status==="ok"){
+      status.innerText=`Merged ${d.added} entries successfully.`;
+      status.className="success";
+      loadKnowledge();
+    }else{
+      status.innerText="Upload failed: "+(d.msg||d.status);
+      status.className="error";
+    }
+  })
+  .catch(()=>{
+    status.innerText="Upload error.";
+    status.className="error";
+  });
+}
+
+loadKnowledge();
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MECK – Knowledge Admin</title>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial, sans-serif;
+  background:#0b0b0b;
+  color:white;
+}
+
+header{
+  padding:16px;
+  text-align:center;
+  font-size:22px;
+  background:#000;
+  border-bottom:1px solid #222;
+}
+
+.container{
+  padding:16px;
+}
+
+.card{
+  background:#111;
+  border:1px solid #222;
+  border-radius:12px;
+  padding:14px;
+  margin-bottom:16px;
+}
+
+input, textarea{
+  width:100%;
+  padding:10px;
+  margin-top:8px;
+  border-radius:8px;
+  border:none;
+  background:#222;
+  color:white;
+}
+
+button{
+  margin-top:10px;
+  padding:10px 16px;
+  border:none;
+  border-radius:8px;
+  background:#1e90ff;
+  color:white;
+  cursor:pointer;
+}
+
+.delete-btn{
+  background:#ff4444;
+  margin-left:10px;
+}
+
+.row{
+  border-bottom:1px solid #222;
+  padding:10px 0;
+}
+.small{
+  color:#aaa;
+  font-size:13px;
+}
+</style>
+</head>
+
+<body>
+
+<header>MECK – Knowledge Admin</header>
+
+<div class="container">
+
+  <!-- ADD KNOWLEDGE -->
+  <div class="card">
+    <h3>Add Knowledge</h3>
+    <input id="q" placeholder="Question (example: who is elon musk)">
+    <textarea id="a" rows="4" placeholder="Answer"></textarea>
+    <button onclick="addKnowledge()">Add</button>
+  </div>
+
+  <!-- KNOWLEDGE LIST -->
+  <div class="card">
+    <h3>Stored Knowledge</h3>
+    <div id="list"></div>
+  </div>
+
+</div>
+
+<script>
+function loadKnowledge(){
+  fetch("/knowledge-data")
+  .then(r=>r.json())
+  .then(data=>{
+    const list=document.getElementById("list");
+    list.innerHTML="";
+    Object.keys(data).forEach(q=>{
+      const div=document.createElement("div");
+      div.className="row";
+      div.innerHTML=`
+        <b>${q}</b>
+        <p class="small">${data[q]}</p>
+        <button class="delete-btn" onclick="del('${q}')">Delete</button>
+      `;
+      list.appendChild(div);
+    });
+  });
+}
+
+function addKnowledge(){
+  const q=document.getElementById("q").value.trim();
+  const a=document.getElementById("a").value.trim();
+  if(!q||!a) return alert("Fill both fields");
+
+  fetch("/knowledge-add",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({question:q,answer:a})
+  }).then(()=>{
+    document.getElementById("q").value="";
+    document.getElementById("a").value="";
+    loadKnowledge();
+  });
+}
+
+function del(q){
+  fetch("/knowledge-delete",{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({question:q})
+  }).then(()=>loadKnowledge());
+}
+
+loadKnowledge();
+</script>
+
+</body>
+</html>
