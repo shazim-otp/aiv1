@@ -2,22 +2,12 @@ import json
 import os
 import time
 from datetime import datetime
+import requests
+import difflib
+import re
 
 from listen import listen
 from wake import WakeWord
-
-# =========================
-# ✅ spell correction
-# =========================
-import difflib
-import re
-# =========================
-
-# =========================
-# ✅ wikipedia fetch
-# =========================
-import requests
-# =========================
 
 KB_FILE = "knowledge.json"
 MEM_FILE = "memory.json"
@@ -32,7 +22,10 @@ try:
 except:
     MEM = {}
 
-# ---------- SPEAK (SAFE) ----------
+# ---------- API KEY ----------
+API_KEY = "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"  # set this in terminal
+
+# ---------- SPEAK ----------
 def speak(text):
     if not text:
         return
@@ -56,9 +49,7 @@ def normalize(text):
         text = text.replace(w, "")
     return text.strip()
 
-# =========================
-# spell correction helpers
-# =========================
+# ---------- SPELL CORRECTION ----------
 def clean_text(text):
     return re.sub(r"[^a-z0-9\s]", "", text)
 
@@ -69,11 +60,8 @@ def correct_spelling(query, keys):
         match = difflib.get_close_matches(w, keys, n=1, cutoff=0.75)
         corrected.append(match[0] if match else w)
     return " ".join(corrected)
-# =========================
 
-# =========================
-# Wikipedia helpers
-# =========================
+# ---------- WIKIPEDIA ----------
 def fetch_from_wikipedia(query):
     try:
         url = "https://en.wikipedia.org/api/rest_v1/page/summary/" + query.replace(" ", "%20")
@@ -89,7 +77,32 @@ def save_to_knowledge(key, value):
     KB[key] = value
     with open(KB_FILE, "w") as f:
         json.dump(KB, f, indent=2)
-# =========================
+
+# ---------- NEMOTRON AI ----------
+def ask_nemotron(prompt):
+    url = "https://integrate.api.nvidia.com/v1/chat/completions"
+
+    headers = {
+        "Authorization": f"Bearer {API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    data = {
+        "model": "nvidia/nemotron-4-340b-instruct",
+        "messages": [
+            {"role": "user", "content": f"Answer clearly and simply: {prompt}"}
+        ],
+        "temperature": 0.7,
+        "max_tokens": 200
+    }
+
+    try:
+        response = requests.post(url, headers=headers, json=data)
+        result = response.json()
+        return result["choices"][0]["message"]["content"]
+    except Exception as e:
+        print("Nemotron error:", e)
+        return "AI service is not available right now."
 
 # ---------- MATCHING ----------
 def keyword_score(q, k):
@@ -145,7 +158,7 @@ def forget():
         speak("Memory not found.")
 
 # ---------- COMMAND HANDLER ----------
-def handle(text, web_mode=False):
+def handle(text):
     text = text.lower()
 
     if any(q in text for q in [
@@ -156,27 +169,28 @@ def handle(text, web_mode=False):
         return "I am developed by Shaazim"
 
     q = normalize(text)
-
     q = clean_text(q)
+
     kb_keys = list(KB.keys())
     corrected_q = correct_spelling(q, kb_keys)
 
-    # 1️⃣ MEMORY (highest)
+    # 1️⃣ MEMORY
     if corrected_q in MEM:
         return MEM[corrected_q]
 
-    # 2️⃣ WIKIPEDIA (priority)
+    # 2️⃣ WIKIPEDIA
     wiki_ans = fetch_from_wikipedia(corrected_q)
     if wiki_ans:
         save_to_knowledge(corrected_q, wiki_ans)
         return wiki_ans
 
-    # 3️⃣ LOCAL KNOWLEDGE (last)
+    # 3️⃣ LOCAL KB
     ans = find_answer(corrected_q, KB)
     if ans:
         return ans
 
-    return "I do not have information about that yet."
+    # 4️⃣ NEMOTRON (FINAL AI)
+    return ask_nemotron(corrected_q)
 
 # ---------- MAIN ----------
 def main():
@@ -208,7 +222,8 @@ def main():
                 awake = False
                 continue
 
-            handle(command)
+            response = handle(command)
+            speak(response)
 
         except KeyboardInterrupt:
             speak("Shutting down.")
@@ -221,4 +236,3 @@ def main():
 # ---------- START ----------
 if __name__ == "__main__":
     main()
-
