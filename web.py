@@ -1,9 +1,11 @@
+from flask import Flask, request, jsonify
 import requests
+
+app = Flask(__name__)
 
 # 🔑 API KEY
 API_KEY = "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"
 
-# ---------- CONFIG ----------
 API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
 
 HEADERS = {
@@ -16,7 +18,7 @@ CUSTOM_RESPONSES = {
     "who made you": "I was developed by Shaazim.",
     "who developed you": "I was developed by Shaazim.",
     "who is your developer": "I was developed by Shaazim.",
-    "who are you": "I am an AI assistant powered by Nemotron."
+    "who are you": "I am an AI assistant powered by mecknown."
 }
 
 def get_custom_reply(text):
@@ -26,61 +28,51 @@ def get_custom_reply(text):
             return value
     return None
 
-
-# ---------- NEMOTRON ----------
+# ---------- AI ----------
 def ask_nemotron(prompt):
     payload = {
         "model": "nvidia/nemotron-4-340b-instruct",
         "messages": [
-            {
-                "role": "user",
-                "content": prompt.strip()
-            }
+            {"role": "user", "content": prompt}
         ],
-        "temperature": 0.5,   # more stable
-        "max_tokens": 250     # faster response
+        "temperature": 0.5,
+        "max_tokens": 250
     }
 
     try:
         response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=10)
 
         if response.status_code != 200:
-            return "AI error. Please try again."
+            return "AI error"
 
         data = response.json()
+        return data["choices"][0]["message"]["content"]
 
-        return data.get("choices", [{}])[0].get("message", {}).get("content", "No response.")
+    except:
+        return "AI unavailable"
 
-    except requests.exceptions.Timeout:
-        return "AI timeout. Try again."
-    except requests.exceptions.RequestException:
-        return "Network error."
-    except Exception:
-        return "Unexpected AI error."
+# ---------- ROUTES ----------
+@app.route("/")
+def home():
+    return "Nemotron AI is running"
 
+@app.route("/chat", methods=["POST"])
+def chat():
+    data = request.json
+    message = data.get("message", "")
 
-# ---------- MAIN HANDLER ----------
-def handle(text):
-    if not text or not text.strip():
-        return "Please enter a valid message."
+    if not message:
+        return jsonify({"reply": "Empty message"})
 
-    # 1️⃣ Custom responses
-    custom = get_custom_reply(text)
+    # custom first
+    custom = get_custom_reply(message)
     if custom:
-        return custom
+        return jsonify({"reply": custom})
 
-    # 2️⃣ AI response
-    return ask_nemotron(text)
+    # AI
+    reply = ask_nemotron(message)
+    return jsonify({"reply": reply})
 
-
-# ---------- CLI TEST ----------
+# ---------- START ----------
 if __name__ == "__main__":
-    print("Nemotron AI Ready (type 'exit')\n")
-
-    while True:
-        user_input = input("You: ").strip()
-
-        if user_input.lower() in ("exit", "quit"):
-            break
-
-        print("AI:", handle(user_input))
+    app.run(host="0.0.0.0", port=10000)
