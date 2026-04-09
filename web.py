@@ -1,17 +1,13 @@
 from flask import Flask, request, jsonify, send_from_directory
-import requests
+from openai import OpenAI
 
 app = Flask(__name__)
 
-# 🔑 API KEY (replace this)
-API_KEY = "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"
-
-API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
-
-HEADERS = {
-    "Authorization": f"Bearer {API_KEY}",
-    "Content-Type": "application/json"
-}
+# 🔑 API KEY
+client = OpenAI(
+    base_url="https://integrate.api.nvidia.com/v1",
+    api_key="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"
+)
 
 # ---------- CUSTOM RESPONSES ----------
 CUSTOM_RESPONSES = {
@@ -29,36 +25,24 @@ def get_custom_reply(text):
     return None
 
 
-# ---------- NEMOTRON ----------
-def ask_nemotron(prompt):
-    payload = {
-        "model": "nvidia/nemotron-4-340b-instruct",
-        "messages": [
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.5,
-        "max_tokens": 250
-    }
-
+# ---------- AI ----------
+def ask_ai(prompt):
     try:
-        response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=10)
+        completion = client.chat.completions.create(
+            model="openai/gpt-oss-20b",
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=500,
+            stream=False   # 🔥 IMPORTANT (no streaming for web)
+        )
 
-        print("STATUS:", response.status_code)
-        print("RAW:", response.text)
+        return completion.choices[0].message.content
 
-        if response.status_code != 200:
-            return "AI error. Try again."
-
-        data = response.json()
-        return data.get("choices", [{}])[0].get("message", {}).get("content", "No response.")
-
-    except requests.exceptions.Timeout:
-        return "AI timeout. Try again."
-    except requests.exceptions.RequestException:
-        return "Network error."
     except Exception as e:
-        print("ERROR:", e)
-        return "Unexpected error."
+        print("AI ERROR:", e)
+        return "AI error. Try again."
 
 
 # ---------- ROUTES ----------
@@ -81,7 +65,7 @@ def chat():
         return jsonify({"reply": custom})
 
     # 2️⃣ AI response
-    reply = ask_nemotron(message)
+    reply = ask_ai(message)
     return jsonify({"reply": reply})
 
 
