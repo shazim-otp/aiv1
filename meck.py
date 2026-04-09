@@ -1,7 +1,5 @@
 import json
 import os
-import time
-from datetime import datetime
 import requests
 import difflib
 import re
@@ -12,9 +10,12 @@ from wake import WakeWord
 KB_FILE = "knowledge.json"
 MEM_FILE = "memory.json"
 
-# ---------- LOAD KNOWLEDGE ----------
-with open(KB_FILE, "r") as f:
-    KB = json.load(f)
+# ---------- LOAD ----------
+try:
+    with open(KB_FILE, "r") as f:
+        KB = json.load(f)
+except:
+    KB = {}
 
 try:
     with open(MEM_FILE, "r") as f:
@@ -22,19 +23,8 @@ try:
 except:
     MEM = {}
 
-# ---------- API KEY ----------
-API_KEY = "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"  # set this in terminal
-
-# ---------- SPEAK ----------
-def speak(text):
-    if not text:
-        return
-
-    text = text.replace('"', '').replace("'", "")
-    print("MECK:", text)
-
-    os.system(f'pico2wave -w /tmp/meck.wav "{text}"')
-    os.system('aplay /tmp/meck.wav')
+# ---------- ⚠️ API KEY (TEMP - CHANGE LATER) ----------
+API_KEY = "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"
 
 # ---------- NORMALIZE ----------
 def normalize(text):
@@ -49,7 +39,7 @@ def normalize(text):
         text = text.replace(w, "")
     return text.strip()
 
-# ---------- SPELL CORRECTION ----------
+# ---------- CLEAN ----------
 def clean_text(text):
     return re.sub(r"[^a-z0-9\s]", "", text)
 
@@ -67,8 +57,7 @@ def fetch_from_wikipedia(query):
         url = "https://en.wikipedia.org/api/rest_v1/page/summary/" + query.replace(" ", "%20")
         r = requests.get(url, timeout=5)
         if r.status_code == 200:
-            data = r.json()
-            return data.get("extract")
+            return r.json().get("extract")
     except:
         pass
     return None
@@ -78,7 +67,7 @@ def save_to_knowledge(key, value):
     with open(KB_FILE, "w") as f:
         json.dump(KB, f, indent=2)
 
-# ---------- NEMOTRON AI ----------
+# ---------- 🧠 NEMOTRON ----------
 def ask_nemotron(prompt):
     url = "https://integrate.api.nvidia.com/v1/chat/completions"
 
@@ -98,13 +87,26 @@ def ask_nemotron(prompt):
 
     try:
         response = requests.post(url, headers=headers, json=data)
+
+        # 🔍 DEBUG (check Render logs)
+        print("STATUS:", response.status_code)
+        print("RAW RESPONSE:", response.text)
+
+        if response.status_code != 200:
+            return "AI error: unable to fetch response."
+
         result = response.json()
-        return result["choices"][0]["message"]["content"]
+
+        if "choices" in result:
+            return result["choices"][0]["message"]["content"]
+
+        return "AI did not return a valid response."
+
     except Exception as e:
         print("Nemotron error:", e)
         return "AI service is not available right now."
 
-# ---------- MATCHING ----------
+# ---------- MATCH ----------
 def keyword_score(q, k):
     return len(set(q.split()) & set(k.split()))
 
@@ -157,7 +159,13 @@ def forget():
     else:
         speak("Memory not found.")
 
-# ---------- COMMAND HANDLER ----------
+# ---------- SPEAK (Render safe) ----------
+def speak(text):
+    if not text:
+        return
+    print("MECK:", text)
+
+# ---------- MAIN HANDLER ----------
 def handle(text):
     text = text.lower()
 
@@ -189,14 +197,12 @@ def handle(text):
     if ans:
         return ans
 
-    # 4️⃣ NEMOTRON (FINAL AI)
-    return ask_nemotron(corrected_q)
+    # 4️⃣ 🔥 NEMOTRON (FINAL AI)
+    return ask_nemotron(f"User asked: {corrected_q}")
 
 # ---------- MAIN ----------
 def main():
-    speak("MECK sleeping.")
     wake = WakeWord()
-
     awake = False
 
     while True:
@@ -210,8 +216,6 @@ def main():
             command = listen()
             if not command:
                 continue
-
-            command = command.lower()
 
             if any(x in command for x in [
                 "sleep",
@@ -231,8 +235,4 @@ def main():
 
         except Exception as e:
             print("Runtime error:", e)
-            speak("An error occurred. Recovering.")
-
-# ---------- START ----------
-if __name__ == "__main__":
-    main()
+            speak("An error occurred.")
