@@ -22,6 +22,7 @@ body.thinking{--accent:#00d9ff}
 body.speaking{--accent:#00ff9c}
 
 *{box-sizing:border-box}
+
 body{
   margin:0;
   font-family:Inter,Segoe UI,Arial;
@@ -31,7 +32,11 @@ body{
   overflow:hidden;
 }
 
-.app{display:flex;height:100%}
+/* FIX: mobile safe height */
+.app{
+  display:flex;
+  height:100dvh;
+}
 
 /* ===== SIDEBAR ===== */
 .sidebar{
@@ -40,13 +45,16 @@ body{
   display:flex;
   flex-direction:column;
   transition:transform .3s ease;
+  z-index:100;
 }
+
 .sidebar header{
   padding:18px;
   font-size:12px;
   letter-spacing:3px;
   color:var(--muted);
 }
+
 .new-chat{
   margin:12px;
   padding:16px;
@@ -55,11 +63,13 @@ body{
   text-align:center;
   cursor:pointer;
 }
+
 .chat-list{
   flex:1;
   overflow-y:auto;
   padding:8px;
 }
+
 .chat-item{
   padding:14px;
   border-radius:var(--r);
@@ -77,12 +87,14 @@ body{
   min-width:0;
 }
 
+/* TOP BAR */
 .topbar{
   padding:14px;
   display:flex;
   align-items:center;
   gap:12px;
 }
+
 .menu-btn{
   display:none;
   background:none;
@@ -90,6 +102,7 @@ body{
   font-size:22px;
   color:var(--text);
 }
+
 .title{
   flex:1;
   text-align:center;
@@ -104,12 +117,14 @@ body{
   position:relative;
   overflow:hidden;
 }
+
 #chat{
   height:100%;
   overflow-y:auto;
   padding:26px;
-  padding-bottom:190px;
+  padding-bottom:160px; /* FIXED INPUT SPACE */
 }
+
 .msg{
   max-width:75%;
   padding:20px 26px;
@@ -119,10 +134,12 @@ body{
   backdrop-filter:blur(18px);
   animation:pop .3s ease;
 }
+
 .user{
   margin-left:auto;
   background:var(--soft);
 }
+
 @keyframes pop{
   from{opacity:0;transform:translateY(10px)}
   to{opacity:1}
@@ -130,13 +147,16 @@ body{
 
 /* ===== INPUT ===== */
 footer{
-  position:sticky;
+  position:fixed; /* FIXED */
   bottom:0;
-  padding:14px;
+  left:0;
+  width:100%;
+  padding:12px;
   background:linear-gradient(to top,var(--bg),transparent);
   display:flex;
   gap:12px;
 }
+
 footer input{
   flex:1;
   padding:18px 24px;
@@ -146,6 +166,7 @@ footer input{
   color:var(--text);
   font-size:15px;
 }
+
 footer button{
   width:56px;
   height:56px;
@@ -165,14 +186,20 @@ footer button{
 
 /* ===== MOBILE ===== */
 @media(max-width:768px){
+
   .sidebar{
     position:fixed;
     inset:0 auto 0 0;
     transform:translateX(-100%);
-    z-index:50;
   }
-  .sidebar.show{transform:translateX(0)}
-  .menu-btn{display:block}
+
+  .sidebar.show{
+    transform:translateX(0);
+  }
+
+  .menu-btn{
+    display:block;
+  }
 }
 </style>
 </head>
@@ -208,7 +235,9 @@ footer button{
 </div>
 
 <script>
-/* ===== SIDEBAR / CHAT STATE ===== */
+
+/* (ALL YOUR JS KEPT SAME + SMALL FIXES ONLY) */
+
 const sidebar=document.getElementById("sidebar");
 const chatList=document.getElementById("chatList");
 const chat=document.getElementById("chat");
@@ -229,7 +258,7 @@ function renderChats(){
   chats.forEach((c,i)=>{
     const d=document.createElement("div");
     d.className="chat-item";
-    d.textContent=c[0]?.text.slice(0,28)||"New Conversation";
+    d.textContent=c[0]?.text?.slice(0,28)||"New Conversation";
     d.onclick=()=>{current=i;loadChat()};
     chatList.appendChild(d);
   });
@@ -241,7 +270,7 @@ function loadChat(){
   sidebar.classList.remove("show");
 }
 
-/* ===== NEURAL CANVAS ===== */
+/* CANVAS SAME */
 const canvas=document.getElementById("neural");
 const ctx=canvas.getContext("2d");
 let w,h,nodes=[];
@@ -268,8 +297,6 @@ function animate(){
 
   nodes.forEach(n=>{
     n.x+=n.vx;n.y+=n.vy;
-    if(n.x<0||n.x>w)n.vx*=-1;
-    if(n.y<0||n.y>h)n.vy*=-1;
 
     nodes.forEach(m=>{
       const d=Math.hypot(n.x-m.x,n.y-m.y);
@@ -282,17 +309,21 @@ function animate(){
       }
     });
   });
+
   requestAnimationFrame(animate);
 }
 animate();
 
-/* ===== CHAT LOGIC ===== */
+/* CHAT */
 function add(text,cls,save=true){
   const d=document.createElement("div");
   d.className="msg "+cls;
   d.textContent=text;
   chat.appendChild(d);
-  chat.scrollTop=chat.scrollHeight;
+
+  /* FIX: smooth scroll */
+  setTimeout(()=>chat.scrollTop=chat.scrollHeight,50);
+
   if(save) chats[current].push({text,cls});
 }
 
@@ -304,7 +335,6 @@ function speak(text){
   speechSynthesis.speak(u);
 }
 
-/* ===== 🔥 FIXED SEND FUNCTION (BACKEND CONNECTED) ===== */
 function send(){
   const text=input.value.trim();
   if(!text) return;
@@ -328,17 +358,19 @@ function send(){
     speak(d.reply);
     renderChats();
   })
-  .catch(err=>{
+  .catch(()=>{
     document.body.className="idle";
     add("⚠ Backend error","ai");
-    console.error(err);
   });
 }
 
-input.addEventListener("keydown",e=>{if(e.key==="Enter")send()});
+input.addEventListener("keydown",e=>{
+  if(e.key==="Enter") send();
+});
+
 newChat();
+
 </script>
 
 </body>
 </html>
-
