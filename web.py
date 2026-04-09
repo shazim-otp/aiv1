@@ -1,9 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_from_directory
 import requests
 
 app = Flask(__name__)
 
-# 🔑 API KEY
+# 🔑 API KEY (replace this)
 API_KEY = "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"
 
 API_URL = "https://integrate.api.nvidia.com/v1/chat/completions"
@@ -18,7 +18,7 @@ CUSTOM_RESPONSES = {
     "who made you": "I was developed by Shaazim.",
     "who developed you": "I was developed by Shaazim.",
     "who is your developer": "I was developed by Shaazim.",
-    "who are you": "I am an AI assistant powered by mecknown."
+    "who are you": "I am an AI assistant powered by Mecknown."
 }
 
 def get_custom_reply(text):
@@ -28,7 +28,8 @@ def get_custom_reply(text):
             return value
     return None
 
-# ---------- AI ----------
+
+# ---------- NEMOTRON ----------
 def ask_nemotron(prompt):
     payload = {
         "model": "nvidia/nemotron-4-340b-instruct",
@@ -42,36 +43,52 @@ def ask_nemotron(prompt):
     try:
         response = requests.post(API_URL, headers=HEADERS, json=payload, timeout=10)
 
+        print("STATUS:", response.status_code)
+        print("RAW:", response.text)
+
         if response.status_code != 200:
-            return "AI error"
+            return "AI error. Try again."
 
         data = response.json()
-        return data["choices"][0]["message"]["content"]
+        return data.get("choices", [{}])[0].get("message", {}).get("content", "No response.")
 
-    except:
-        return "AI unavailable"
+    except requests.exceptions.Timeout:
+        return "AI timeout. Try again."
+    except requests.exceptions.RequestException:
+        return "Network error."
+    except Exception as e:
+        print("ERROR:", e)
+        return "Unexpected error."
+
 
 # ---------- ROUTES ----------
 @app.route("/")
-def home():
-    return "Nemotron AI is running"
+def index():
+    return send_from_directory(".", "web.html")
+
 
 @app.route("/chat", methods=["POST"])
 def chat():
     data = request.json
-    message = data.get("message", "")
+    message = data.get("message", "").strip()
 
     if not message:
-        return jsonify({"reply": "Empty message"})
+        return jsonify({"reply": "Please enter a message."})
 
-    # custom first
+    # 1️⃣ Custom replies
     custom = get_custom_reply(message)
     if custom:
         return jsonify({"reply": custom})
 
-    # AI
+    # 2️⃣ AI response
     reply = ask_nemotron(message)
     return jsonify({"reply": reply})
+
+
+@app.route("/health")
+def health():
+    return "OK"
+
 
 # ---------- START ----------
 if __name__ == "__main__":
