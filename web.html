@@ -7,11 +7,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="icon" href="favicon.ico">
-
 <style>
 
-/* ===== ROOT THEME (MATCH INDEX) ===== */
+/* ===== THEME ===== */
 :root{
   --bg:#0a0a0a;
   --card:#111111;
@@ -31,100 +29,45 @@
 body{
   background:var(--bg);
   color:var(--text);
+  height:100dvh;
+  display:flex;
+  flex-direction:column;
 }
 
-/* ===== NAVBAR ===== */
-nav{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:18px 6%;
-  position:sticky;
-  top:0;
-  background:rgba(10,10,10,0.8);
-  backdrop-filter:blur(10px);
+/* ===== HEADER ===== */
+.header{
+  text-align:center;
+  padding:20px 15px 10px;
   border-bottom:1px solid var(--border);
 }
 
-nav ul{
-  display:flex;
-  gap:20px;
-  list-style:none;
+.header h2{
+  font-size:20px;
 }
 
-nav a{
+.header p{
+  font-size:13px;
   color:var(--muted);
-  text-decoration:none;
+  margin-top:5px;
 }
 
-nav a.active{
-  color:white;
-}
-
-/* MOBILE MENU */
-.menu-toggle{
-  display:none;
-  flex-direction:column;
-  cursor:pointer;
-}
-
-.menu-toggle span{
-  width:25px;
-  height:2px;
-  background:white;
-  margin:4px 0;
-}
-
-@media(max-width:768px){
-  .menu-toggle{display:flex;}
-
-  nav ul{
-    position:absolute;
-    top:60px;
-    right:0;
-    background:#000;
-    flex-direction:column;
-    padding:20px;
-    transform:translateX(100%);
-    transition:0.3s;
-  }
-
-  nav ul.active{
-    transform:translateX(0);
-  }
-}
-
-/* ===== LAYOUT ===== */
-.container{
-  max-width:800px;
-  margin:auto;
-  padding:100px 20px 120px;
-}
-
-/* HEADER */
-.ai-header{
-  text-align:center;
-  margin-bottom:30px;
-}
-
-/* CHAT */
+/* ===== CHAT ===== */
 .chat-box{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:16px;
-  padding:20px;
-  height:500px;
+  flex:1;
   overflow-y:auto;
+  padding:15px;
   display:flex;
   flex-direction:column;
+  gap:10px;
 }
 
 /* MESSAGE */
 .msg{
-  margin:10px 0;
-  padding:12px 16px;
-  border-radius:12px;
-  max-width:75%;
+  padding:12px 14px;
+  border-radius:14px;
+  max-width:80%;
+  font-size:14px;
+  line-height:1.4;
 }
 
 .user{
@@ -138,16 +81,13 @@ nav a.active{
   background:#1a1a1a;
 }
 
-/* INPUT */
+/* ===== INPUT ===== */
 .input-area{
-  position:fixed;
-  bottom:0;
-  left:0;
-  width:100%;
-  padding:15px;
-  background:linear-gradient(to top,var(--bg),transparent);
   display:flex;
   gap:10px;
+  padding:12px;
+  border-top:1px solid var(--border);
+  background:var(--bg);
 }
 
 .input-area input{
@@ -157,13 +97,21 @@ nav a.active{
   border:1px solid var(--border);
   background:#0f0f0f;
   color:white;
+  font-size:14px;
 }
 
 .input-area button{
-  padding:12px 18px;
+  padding:12px 16px;
   border-radius:10px;
+  border:none;
   background:#fff;
   color:#000;
+}
+
+/* ===== MOBILE IMPROVEMENT ===== */
+@media(max-width:768px){
+  .header h2{font-size:18px;}
+  .msg{font-size:13px;}
 }
 
 </style>
@@ -172,35 +120,14 @@ nav a.active{
 
 <body>
 
-<!-- NAVBAR -->
-<nav>
-  <h1>Mecknown</h1>
-
-  <div class="menu-toggle" id="menu-toggle">
-    <span></span><span></span><span></span>
-  </div>
-
-  <ul id="nav-links">
-    <li><a href="index.html">Home</a></li>
-    <li><a href="ai.html" class="active">Meck AI</a></li>
-    <li><a href="course.html">Course</a></li>
-    <li><a href="shop.html">Shop</a></li>
-    <li><a href="services.html">Services</a></li>
-    <li><a href="about.html">About</a></li>
-    <li><a href="contact.html">Contact</a></li>
-  </ul>
-</nav>
-
-<div class="container">
-
-  <div class="ai-header">
-    <h2>Meck AI</h2>
-    <p>Ask anything about robotics, coding, and technology</p>
-  </div>
-
-  <div id="messages" class="chat-box"></div>
-
+<!-- HEADER -->
+<div class="header">
+  <h2>Meck AI</h2>
+  <p>Ask anything about robotics & coding</p>
 </div>
+
+<!-- CHAT -->
+<div id="messages" class="chat-box"></div>
 
 <!-- INPUT -->
 <div class="input-area">
@@ -210,22 +137,12 @@ nav a.active{
 
 <script>
 
-/* NAV MENU */
-const toggle=document.getElementById("menu-toggle");
-const navLinks=document.getElementById("nav-links");
-
-if(toggle){
-  toggle.addEventListener("click",()=>{
-    navLinks.classList.toggle("active");
-  });
-}
-
-/* CHAT */
+/* CHAT FUNCTION (UNCHANGED) */
 async function send(){
   let input=document.getElementById("input");
   let message=input.value.trim();
 
-  if(!message)return;
+  if(!message) return;
 
   let messagesDiv=document.getElementById("messages");
 
@@ -255,6 +172,11 @@ async function send(){
 document.getElementById("input").addEventListener("keydown",e=>{
   if(e.key==="Enter") send();
 });
+
+/* AUTO FOCUS MOBILE */
+window.onload=()=>{
+  document.getElementById("input").focus();
+};
 
 </script>
 
