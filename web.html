@@ -1,62 +1,261 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Nemotron Chat</title>
-    <style>
-        body { font-family: Arial; background: #111; color: white; }
-        #chat { max-width: 600px; margin: auto; padding: 20px; }
-        .msg { margin: 10px 0; }
-        .user { color: #00ffcc; }
-        .bot { color: #ffffff; }
-        input { width: 80%; padding: 10px; }
-        button { padding: 10px; }
-    </style>
+
+<title>Meck AI</title>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<link rel="icon" href="favicon.ico">
+
+<style>
+
+/* ===== ROOT THEME (MATCH INDEX) ===== */
+:root{
+  --bg:#0a0a0a;
+  --card:#111111;
+  --border:#1f1f1f;
+  --text:#e5e5e5;
+  --muted:#9ca3af;
+}
+
+/* ===== GLOBAL ===== */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  font-family:'Inter',sans-serif;
+}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+}
+
+/* ===== NAVBAR ===== */
+nav{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:18px 6%;
+  position:sticky;
+  top:0;
+  background:rgba(10,10,10,0.8);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--border);
+}
+
+nav ul{
+  display:flex;
+  gap:20px;
+  list-style:none;
+}
+
+nav a{
+  color:var(--muted);
+  text-decoration:none;
+}
+
+nav a.active{
+  color:white;
+}
+
+/* MOBILE MENU */
+.menu-toggle{
+  display:none;
+  flex-direction:column;
+  cursor:pointer;
+}
+
+.menu-toggle span{
+  width:25px;
+  height:2px;
+  background:white;
+  margin:4px 0;
+}
+
+@media(max-width:768px){
+  .menu-toggle{display:flex;}
+
+  nav ul{
+    position:absolute;
+    top:60px;
+    right:0;
+    background:#000;
+    flex-direction:column;
+    padding:20px;
+    transform:translateX(100%);
+    transition:0.3s;
+  }
+
+  nav ul.active{
+    transform:translateX(0);
+  }
+}
+
+/* ===== LAYOUT ===== */
+.container{
+  max-width:800px;
+  margin:auto;
+  padding:100px 20px 120px;
+}
+
+/* HEADER */
+.ai-header{
+  text-align:center;
+  margin-bottom:30px;
+}
+
+/* CHAT */
+.chat-box{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:16px;
+  padding:20px;
+  height:500px;
+  overflow-y:auto;
+  display:flex;
+  flex-direction:column;
+}
+
+/* MESSAGE */
+.msg{
+  margin:10px 0;
+  padding:12px 16px;
+  border-radius:12px;
+  max-width:75%;
+}
+
+.user{
+  align-self:flex-end;
+  background:#fff;
+  color:#000;
+}
+
+.bot{
+  align-self:flex-start;
+  background:#1a1a1a;
+}
+
+/* INPUT */
+.input-area{
+  position:fixed;
+  bottom:0;
+  left:0;
+  width:100%;
+  padding:15px;
+  background:linear-gradient(to top,var(--bg),transparent);
+  display:flex;
+  gap:10px;
+}
+
+.input-area input{
+  flex:1;
+  padding:12px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:#0f0f0f;
+  color:white;
+}
+
+.input-area button{
+  padding:12px 18px;
+  border-radius:10px;
+  background:#fff;
+  color:#000;
+}
+
+</style>
+
 </head>
+
 <body>
 
-<div id="chat">
-    <h2>🤖 Nemotron AI</h2>
+<!-- NAVBAR -->
+<nav>
+  <h1>Mecknown</h1>
 
-    <div id="messages"></div>
+  <div class="menu-toggle" id="menu-toggle">
+    <span></span><span></span><span></span>
+  </div>
 
-    <input type="text" id="input" placeholder="Type your message..." />
-    <button onclick="send()">Send</button>
+  <ul id="nav-links">
+    <li><a href="index.html">Home</a></li>
+    <li><a href="ai.html" class="active">Meck AI</a></li>
+    <li><a href="course.html">Course</a></li>
+    <li><a href="shop.html">Shop</a></li>
+    <li><a href="services.html">Services</a></li>
+    <li><a href="about.html">About</a></li>
+    <li><a href="contact.html">Contact</a></li>
+  </ul>
+</nav>
+
+<div class="container">
+
+  <div class="ai-header">
+    <h2>Meck AI</h2>
+    <p>Ask anything about robotics, coding, and technology</p>
+  </div>
+
+  <div id="messages" class="chat-box"></div>
+
+</div>
+
+<!-- INPUT -->
+<div class="input-area">
+  <input type="text" id="input" placeholder="Type your message..." />
+  <button onclick="send()">➤</button>
 </div>
 
 <script>
-async function send() {
-    let input = document.getElementById("input");
-    let message = input.value.trim();
 
-    if (!message) return;
+/* NAV MENU */
+const toggle=document.getElementById("menu-toggle");
+const navLinks=document.getElementById("nav-links");
 
-    let messagesDiv = document.getElementById("messages");
-
-    // Show user message
-    messagesDiv.innerHTML += `<div class="msg user">You: ${message}</div>`;
-
-    input.value = "";
-
-    try {
-        let res = await fetch("/chat", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ message: message })
-        });
-
-        let data = await res.json();
-
-        // Show bot reply
-        messagesDiv.innerHTML += `<div class="msg bot">AI: ${data.reply}</div>`;
-
-        messagesDiv.scrollTop = messagesDiv.scrollHeight;
-
-    } catch (err) {
-        messagesDiv.innerHTML += `<div class="msg bot">Error connecting to server</div>`;
-    }
+if(toggle){
+  toggle.addEventListener("click",()=>{
+    navLinks.classList.toggle("active");
+  });
 }
+
+/* CHAT */
+async function send(){
+  let input=document.getElementById("input");
+  let message=input.value.trim();
+
+  if(!message)return;
+
+  let messagesDiv=document.getElementById("messages");
+
+  messagesDiv.innerHTML+=`<div class="msg user">${message}</div>`;
+  input.value="";
+
+  messagesDiv.scrollTop=messagesDiv.scrollHeight;
+
+  try{
+    let res=await fetch("/chat",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body:JSON.stringify({message})
+    });
+
+    let data=await res.json();
+
+    messagesDiv.innerHTML+=`<div class="msg bot">${data.reply}</div>`;
+    messagesDiv.scrollTop=messagesDiv.scrollHeight;
+
+  }catch{
+    messagesDiv.innerHTML+=`<div class="msg bot">Error connecting to server</div>`;
+  }
+}
+
+/* ENTER KEY */
+document.getElementById("input").addEventListener("keydown",e=>{
+  if(e.key==="Enter") send();
+});
+
 </script>
 
 </body>
