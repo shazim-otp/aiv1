@@ -19,9 +19,7 @@
   font-family:'Inter',sans-serif;
 }
 
-html, body{
-  height:100%;
-}
+html, body{ height:100%; }
 
 body{
   background:var(--bg);
@@ -30,17 +28,14 @@ body{
   flex-direction:column;
 }
 
-/* ===== HEADER ===== */
+/* HEADER */
 .header{
   text-align:center;
   padding:20px 15px 10px;
   border-bottom:1px solid var(--border);
 }
 
-.header h2{font-size:20px;}
-.header p{font-size:13px;color:var(--muted);margin-top:5px;}
-
-/* ===== CHAT ===== */
+/* CHAT */
 .chat-box{
   flex:1;
   overflow-y:auto;
@@ -51,14 +46,10 @@ body{
   min-height:0;
 }
 
-/* MESSAGE */
 .msg{
   padding:12px 14px;
   border-radius:14px;
   max-width:85%;
-  font-size:14px;
-  line-height:1.5;
-  word-wrap:break-word;
 }
 
 .user{
@@ -72,14 +63,12 @@ body{
   background:#1a1a1a;
 }
 
-/* ===== CODE BLOCK ===== */
+/* CODE */
 pre{
   background:#000;
   padding:12px;
   border-radius:10px;
-  overflow:auto;
   position:relative;
-  margin-top:8px;
 }
 
 .copy-btn{
@@ -90,19 +79,16 @@ pre{
   color:#fff;
   border:none;
   padding:4px 8px;
-  font-size:12px;
   border-radius:6px;
   cursor:pointer;
 }
 
-/* ===== INPUT ===== */
+/* INPUT */
 .input-area{
   display:flex;
   gap:10px;
   padding:12px;
   border-top:1px solid var(--border);
-  background:var(--bg);
-  flex-shrink:0;
 }
 
 .input-area input{
@@ -115,26 +101,10 @@ pre{
 }
 
 .input-area button{
-  padding:12px 16px;
-  border-radius:10px;
-  border:none;
+  padding:12px;
   background:#fff;
-  color:#000;
-}
-
-/* ===== HEADINGS ===== */
-.msg h1, .msg h2, .msg h3{
-  margin:8px 0;
-}
-
-/* ===== LIST ===== */
-.msg ul{
-  margin-left:15px;
-}
-
-/* ===== MOBILE ===== */
-@media(max-width:768px){
-  .msg{font-size:13px;}
+  border:none;
+  border-radius:10px;
 }
 
 </style></head><body><div class="header">
@@ -145,29 +115,38 @@ pre{
   <button onclick="send()">➤</button>
 </div><script>
 
+/* ESCAPE HTML */
+function escapeHTML(str){
+  return str.replace(/[&<>"']/g, function(tag){
+    const chars = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;'
+    };
+    return chars[tag];
+  });
+}
+
 /* FORMAT MESSAGE */
 function formatMessage(text){
-  // code blocks ```
+
+  // code block
   text = text.replace(/```([\s\S]*?)```/g, (match, code) => {
     return `
-      <pre>
-        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
-        <code>${escapeHTML(code)}</code>
-      </pre>`;
-
-});
+    <pre>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <code>${escapeHTML(code)}</code>
+    </pre>`;});
 
 // headings
-text = text.replace(/^### (.$)/gim, "<h3>$1</h3>");
-text = text.replace(/^## (.$)/gim, "<h2>$1</h2>");
-text = text.replace(/^# (.*$)/gim, "<h1>$1</h1>");
+text = text.replace(/^### (.)$/gim, "<h3>$1</h3>");
+text = text.replace(/^## (.)$/gim, "<h2>$1</h2>");
+text = text.replace(/^# (.*)$/gim, "<h1>$1</h1>");
 
 // bold
 text = text.replace(/**(.*?)**/g, "<b>$1</b>");
-
-// lists
-text = text.replace(/^- (.$)/gim, "<li>$1</li>");
-text = text.replace(/(<li>.</li>)/g, "<ul>$1</ul>");
 
 // line breaks
 text = text.replace(/\n/g, "<br>");
@@ -175,94 +154,73 @@ text = text.replace(/\n/g, "<br>");
 return text;
 }
 
-/* ESCAPE HTML */
-function escapeHTML(str){
-return str.replace(/[&<>"']/g, function(tag){
-const chars = {
-'&': '&',
-'<': '<',
-'>': '>',
-'"': '"',
-"'": '''
-};
-return chars[tag] || tag;
-});
-}
-
-/* COPY CODE */
+/* COPY */
 function copyCode(btn){
 const code = btn.nextElementSibling.innerText;
 navigator.clipboard.writeText(code);
-btn.innerText = "Copied!";
+btn.innerText="Copied!";
 setTimeout(()=>btn.innerText="Copy",1000);
 }
 
-/* TYPE ANIMATION */
-function typeMessage(element, html){
-let i = 0;
-let temp = document.createElement("div");
-temp.innerHTML = html;
-let text = temp.innerText;
+/* TYPE EFFECT */
+function typeMessage(el, html){
+let i=0;
+let temp=document.createElement("div");
+temp.innerHTML=html;
+let text=temp.innerText;
 
-function typing(){
-if(i < text.length){
-element.innerHTML = text.slice(0, i) + "▌";
+function type(){
+if(i<text.length){
+el.innerHTML=text.slice(0,i)+"▌";
 i++;
-setTimeout(typing, 10);
-} else {
-element.innerHTML = html;
+setTimeout(type,10);
+}else{
+el.innerHTML=html;
 }
+}
+type();
 }
 
-typing();
-}
-
-/* SEND MESSAGE */
+/* SEND */
 async function send(){
+
 let input=document.getElementById("input");
-let message=input.value.trim();
-if(!message) return;
+let msg=input.value.trim();
+if(!msg) return;
 
-let messagesDiv=document.getElementById("messages");
+let box=document.getElementById("messages");
 
-messagesDiv.innerHTML+="<div class="msg user">${message}</div>";
+box.innerHTML += "<div class="msg user">${msg}</div>";
 input.value="";
-messagesDiv.scrollTop=messagesDiv.scrollHeight;
 
-let botDiv=document.createElement("div");
-botDiv.className="msg bot";
-messagesDiv.appendChild(botDiv);
+let bot=document.createElement("div");
+bot.className="msg bot";
+box.appendChild(bot);
+
+box.scrollTop=box.scrollHeight;
 
 try{
 let res=await fetch("/chat",{
 method:"POST",
 headers:{ "Content-Type":"application/json" },
-body:JSON.stringify({message})
+body:JSON.stringify({message:msg})
 });
 
 let data=await res.json();
-let formatted = formatMessage(data.reply);
 
-typeMessage(botDiv, formatted);
+let formatted=formatMessage(data.reply);
+typeMessage(bot, formatted);
 
-setTimeout(()=>{
-  messagesDiv.scrollTop=messagesDiv.scrollHeight;
-},500);
-
-}catch{
-botDiv.innerHTML="Error connecting to server";
-}
+}catch(e){
+bot.innerHTML="Server error";
 }
 
-/* ENTER KEY */
+}
+
+/* ENTER */
 document.getElementById("input").addEventListener("keydown",e=>{
 if(e.key==="Enter") send();
 });
-
-/* AUTO FOCUS */
-window.onload=()=>{
-document.getElementById("input").focus();
-};
 
 </script></body>
 </html>
