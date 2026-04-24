@@ -1,6 +1,12 @@
-<!DOCTYPE html><html lang="en">
-<head><title>Meck AI</title><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><style>
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<title>Meck AI</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
 
 /* ===== THEME ===== */
 :root{
@@ -107,13 +113,25 @@ pre{
   border-radius:10px;
 }
 
-</style></head><body><div class="header">
+</style>
+
+</head>
+
+<body>
+
+<div class="header">
   <h2>Meck AI</h2>
   <p>Ask anything about robotics & coding</p>
-</div><div id="messages" class="chat-box"></div><div class="input-area">
+</div>
+
+<div id="messages" class="chat-box"></div>
+
+<div class="input-area">
   <input type="text" id="input" placeholder="Type your message..." />
   <button onclick="send()">➤</button>
-</div><script>
+</div>
+
+<script>
 
 /* ESCAPE HTML */
 function escapeHTML(str){
@@ -138,11 +156,13 @@ function formatMessage(text){
     <pre>
       <button class="copy-btn" onclick="copyCode(this)">Copy</button>
       <code>${escapeHTML(code)}</code>
-    </pre>`;});
+    </pre>`;
+
+});
 
 // headings
-text = text.replace(/^### (.)$/gim, "<h3>$1</h3>");
-text = text.replace(/^## (.)$/gim, "<h2>$1</h2>");
+text = text.replace(/^### (.*)$/gim, "<h3>$1</h3>");
+text = text.replace(/^## (.*)$/gim, "<h2>$1</h2>");
 text = text.replace(/^# (.*)$/gim, "<h1>$1</h1>");
 
 // bold
@@ -190,7 +210,9 @@ if(!msg) return;
 
 let box=document.getElementById("messages");
 
-box.innerHTML += "<div class="msg user">${msg}</div>";
+/* ✅ FIXED LINE */
+box.innerHTML += `<div class="msg user">${msg}</div>`;
+
 input.value="";
 
 let bot=document.createElement("div");
@@ -206,15 +228,16 @@ headers:{ "Content-Type":"application/json" },
 body:JSON.stringify({message:msg})
 });
 
+```
 let data=await res.json();
 
 let formatted=formatMessage(data.reply);
 typeMessage(bot, formatted);
+```
 
 }catch(e){
-bot.innerHTML="Server error";
+bot.innerHTML="⚠️ Server not responding (may be sleeping)";
 }
-
 }
 
 /* ENTER */
@@ -222,5 +245,7 @@ document.getElementById("input").addEventListener("keydown",e=>{
 if(e.key==="Enter") send();
 });
 
-</script></body>
+</script>
+
+</body>
 </html>
