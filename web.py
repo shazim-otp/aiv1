@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from openai import OpenAI
 from flask_cors import CORS
 
-app = Flask(**name**)
+app = Flask(__name__)
 CORS(app)
 
 # 🔑 API KEY (REPLACE THIS)
