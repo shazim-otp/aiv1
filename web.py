@@ -4,7 +4,7 @@ from openai import OpenAI
 
 # ===== APP =====
 
-app = Flask(**name**)
+app = Flask(__name__)
 CORS(app)  # allow frontend requests
 
 # 🔑 API KEY (REPLACE THIS WITH NEW KEY)
