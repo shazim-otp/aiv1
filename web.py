@@ -28,7 +28,7 @@ def get_custom_reply(text):
     for key, value in CUSTOM_RESPONSES.items():
         if key in text:
            return value
-   return None
+    return None
 
 # ===== AI FUNCTION =====
 
