@@ -4,14 +4,14 @@ from openai import OpenAI
 
 # ===== APP =====
 
-app = Flask(__name__)
-CORS(app)  # allow frontend requests
+app = Flask(**name**)
+CORS(app)
 
-# 🔑 API KEY (REPLACE THIS WITH NEW KEY)
+# 🔑 API KEY (REPLACE THIS)
 
 client = OpenAI(
 base_url="https://integrate.api.nvidia.com/v1",
-api_key="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"
+api_key="YOUR_NEW_API_KEY"
 )
 
 # ===== CUSTOM RESPONSES =====
@@ -24,11 +24,11 @@ CUSTOM_RESPONSES = {
 }
 
 def get_custom_reply(text):
-    text = text.lower()
-    for key, value in CUSTOM_RESPONSES.items():
-        if key in text:
-           return value
-    return None
+text = text.lower()
+for key, value in CUSTOM_RESPONSES.items():
+if key in text:
+return value
+return None
 
 # ===== AI FUNCTION =====
 
@@ -43,10 +43,9 @@ temperature=0.7,
 max_tokens=500,
 stream=False
 )
+return completion.choices[0].message.content
 
 ```
-    return completion.choices[0].message.content
-
 except Exception as e:
     print("AI ERROR:", e)
     return "⚠️ AI service unavailable. Try again."
@@ -63,12 +62,12 @@ message = data.get("message", "").strip()
 if not message:
     return jsonify({"reply": "Please enter a message."})
 
-# 1️⃣ custom replies
+# custom reply
 custom = get_custom_reply(message)
 if custom:
     return jsonify({"reply": custom})
 
-# 2️⃣ AI response
+# AI reply
 reply = ask_ai(message)
 return jsonify({"reply": reply})
 ```
