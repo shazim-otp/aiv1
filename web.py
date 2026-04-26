@@ -24,11 +24,11 @@ CUSTOM_RESPONSES = {
 }
 
 def get_custom_reply(text):
-text = text.lower()
-for key, value in CUSTOM_RESPONSES.items():
-if key in text:
-return value
-return None
+    text = text.lower()
+    for key, value in CUSTOM_RESPONSES.items():
+        if key in text:
+           return value
+   return None
 
 # ===== AI FUNCTION =====
 
