@@ -1,18 +1,20 @@
 from flask import Flask, request, jsonify
-from openai import OpenAI
 from flask_cors import CORS
+from openai import OpenAI
 
-app = Flask(__name__)
-CORS(app)
+# ===== APP =====
 
-# 🔑 API KEY (REPLACE THIS)
+app = Flask(**name**)
+CORS(app)  # allow frontend requests
+
+# 🔑 API KEY (REPLACE THIS WITH NEW KEY)
 
 client = OpenAI(
 base_url="https://integrate.api.nvidia.com/v1",
 api_key="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"
 )
 
-# ---------- CUSTOM RESPONSES ----------
+# ===== CUSTOM RESPONSES =====
 
 CUSTOM_RESPONSES = {
 "who made you": "I was developed by Shaazim.",
@@ -28,40 +30,45 @@ if key in text:
 return value
 return None
 
-# ---------- AI ----------
+# ===== AI FUNCTION =====
 
 def ask_ai(prompt):
 try:
 completion = client.chat.completions.create(
 model="openai/gpt-oss-20b",
-messages=[{"role": "user", "content": prompt}],
+messages=[
+{"role": "user", "content": prompt}
+],
 temperature=0.7,
 max_tokens=500,
 stream=False
 )
-return completion.choices[0].message.content
 
 ```
+    return completion.choices[0].message.content
+
 except Exception as e:
     print("AI ERROR:", e)
-    return "AI service unavailable."
+    return "⚠️ AI service unavailable. Try again."
 ```
 
-# ---------- ROUTES ----------
+# ===== ROUTES =====
 
 @app.route("/chat", methods=["POST"])
 def chat():
-data = request.json
+data = request.get_json()
 message = data.get("message", "").strip()
 
 ```
 if not message:
     return jsonify({"reply": "Please enter a message."})
 
+# 1️⃣ custom replies
 custom = get_custom_reply(message)
 if custom:
     return jsonify({"reply": custom})
 
+# 2️⃣ AI response
 reply = ask_ai(message)
 return jsonify({"reply": reply})
 ```
@@ -69,6 +76,8 @@ return jsonify({"reply": reply})
 @app.route("/health")
 def health():
 return "OK"
+
+# ===== RUN =====
 
 if **name** == "**main**":
 app.run(host="0.0.0.0", port=10000)
