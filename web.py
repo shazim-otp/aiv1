@@ -3,80 +3,80 @@ from flask_cors import CORS
 from openai import OpenAI
 
 # ===== APP =====
+app = Flask(__name__)
+CORS(app)  # يسمح للفرونت إند بالاتصال
 
-app = Flask(**name**)
-CORS(app)
-
-# 🔑 API KEY (REPLACE THIS)
-
+# 🔑 API KEY (ضع مفتاحك الجديد هنا)
 client = OpenAI(
-base_url="https://integrate.api.nvidia.com/v1",
-api_key="YOUR_NEW_API_KEY"
+    base_url="https://integrate.api.nvidia.com/v1",
+    api_key="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"
 )
 
 # ===== CUSTOM RESPONSES =====
-
 CUSTOM_RESPONSES = {
-"who made you": "I was developed by Shaazim.",
-"who developed you": "I was developed by Shaazim.",
-"who is your developer": "I was developed by Shaazim.",
-"who are you": "I am an AI assistant powered by Mecknown."
+    "who made you": "I was developed by Shaazim.",
+    "who developed you": "I was developed by Shaazim.",
+    "who is your developer": "I was developed by Shaazim.",
+    "who are you": "I am an AI assistant powered by Mecknown."
 }
 
+
 def get_custom_reply(text):
-text = text.lower()
-for key, value in CUSTOM_RESPONSES.items():
-if key in text:
-return value
-return None
+    text = text.lower()
+    for key, value in CUSTOM_RESPONSES.items():
+        if key in text:
+            return value
+    return None
+
 
 # ===== AI FUNCTION =====
-
 def ask_ai(prompt):
-try:
-completion = client.chat.completions.create(
-model="openai/gpt-oss-20b",
-messages=[
-{"role": "user", "content": prompt}
-],
-temperature=0.7,
-max_tokens=500,
-stream=False
-)
-return completion.choices[0].message.content
+    try:
+        completion = client.chat.completions.create(
+            model="openai/gpt-oss-20b",
+            messages=[
+                {"role": "user", "content": prompt}
+            ],
+            temperature=0.7,
+            max_tokens=500,
+            stream=False
+        )
 
-```
-except Exception as e:
-    print("AI ERROR:", e)
-    return "⚠️ AI service unavailable. Try again."
-```
+        return completion.choices[0].message.content
+
+    except Exception as e:
+        print("AI ERROR:", e)
+        return "⚠️ AI service unavailable. Try again."
+
 
 # ===== ROUTES =====
-
 @app.route("/chat", methods=["POST"])
 def chat():
-data = request.get_json()
-message = data.get("message", "").strip()
+    data = request.get_json()
 
-```
-if not message:
-    return jsonify({"reply": "Please enter a message."})
+    if not data:
+        return jsonify({"reply": "Invalid request."})
 
-# custom reply
-custom = get_custom_reply(message)
-if custom:
-    return jsonify({"reply": custom})
+    message = data.get("message", "").strip()
 
-# AI reply
-reply = ask_ai(message)
-return jsonify({"reply": reply})
-```
+    if not message:
+        return jsonify({"reply": "Please enter a message."})
+
+    # 1️⃣ Custom reply
+    custom = get_custom_reply(message)
+    if custom:
+        return jsonify({"reply": custom})
+
+    # 2️⃣ AI reply
+    reply = ask_ai(message)
+    return jsonify({"reply": reply})
+
 
 @app.route("/health")
 def health():
-return "OK"
+    return "OK"
+
 
 # ===== RUN =====
-
-if **name** == "**main**":
-app.run(host="0.0.0.0", port=10000)
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
